@@ -1,0 +1,19 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// In Prisma 7 the url is managed exclusively through prisma.config.ts
+datasource db {
+  provider = "mysql"
+}
+
+// Stores each snapshot received from the n8n pipeline as an immutable JSON blob.
+// Using a single Json column avoids schema migrations every time the pipeline
+// adds or renames a field — only the DTO layer needs updating.
+model DemografiaData {
+  id        String   @id @default(uuid())
+  payload   Json
+  createdAt DateTime @default(now())
+
+  @@index([createdAt(sort: Desc)])
+}
