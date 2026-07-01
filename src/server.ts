@@ -6,6 +6,9 @@ import { logger } from './config/logger.config';
 const server = app.listen(env.PORT, () => {
   logger.info(`🚀 Server running in [${env.NODE_ENV}] mode on port ${env.PORT}`);
   logger.info(`Health check available at http://localhost:${env.PORT}/health`);
+  if (!env.INGEST_API_KEY) {
+    logger.warn('⚠️ INGEST_API_KEY no configurada: el endpoint POST está abierto.');
+  }
 });
 
 /**

@@ -1,4 +1,4 @@
-import express, { Express, Router } from 'express';
+import express, { Express, Router, RequestHandler } from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
@@ -13,8 +13,20 @@ const app: Express = express();
 
 // ── Global middlewares ────────────────────────────────────────────────────────
 
-app.use(cors());
+// Restrict CORS to CORS_ORIGIN (comma-separated) when set; otherwise allow any.
+const corsOrigin = env.CORS_ORIGIN
+  ? env.CORS_ORIGIN.split(',').map((o) => o.trim())
+  : '*';
+app.use(cors({ origin: corsOrigin }));
 app.use(express.json({ limit: '1mb' }));
+
+// Protects the ingestion endpoint. Active only when INGEST_API_KEY is set;
+// otherwise the endpoint stays open (a startup warning is logged).
+const requireApiKey: RequestHandler = (req, res, next) => {
+  if (!env.INGEST_API_KEY) return next();
+  if (req.header('x-api-key') === env.INGEST_API_KEY) return next();
+  res.status(401).json({ success: false, message: 'Unauthorized' });
+};
 
 // HTTP request logger
 app.use((req, _res, next) => {
@@ -45,7 +57,7 @@ const demografiaController = new DemografiaController(demografiaService);
 const demografiaRouter = Router();
 
 // n8n pipeline pushes cleaned data here
-demografiaRouter.post('/', demografiaController.receiveFromN8n);
+demografiaRouter.post('/', requireApiKey, demografiaController.receiveFromN8n);
 
 // Next.js frontend reads the latest snapshot here
 demografiaRouter.get('/latest', demografiaController.getLatest);

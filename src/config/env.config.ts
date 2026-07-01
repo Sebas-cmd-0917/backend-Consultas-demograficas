@@ -9,6 +9,10 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   DATABASE_URL: z.string().url('DATABASE_URL must be a valid connection URL'),
+  // Optional: when set, POST ingestion requires a matching `x-api-key` header.
+  INGEST_API_KEY: z.string().min(1).optional(),
+  // Optional: restrict CORS to these origins (comma-separated). Defaults to any.
+  CORS_ORIGIN: z.string().min(1).optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
